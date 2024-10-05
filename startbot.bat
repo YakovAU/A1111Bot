@@ -1,33 +1,50 @@
 @echo off
 setlocal enabledelayedexpansion
 
-echo Updating and starting the bot...
+echo Checking and installing required components...
 
-REM Change to the imagebot directory
-cd imagebot
-
-REM Pull the latest changes
-git pull
+REM Check for winget
+where winget >nul 2>nul
 if %errorlevel% neq 0 (
-    echo Failed to pull latest changes. Please check your internet connection and try again.
+    echo winget is not available. Please update your Windows version or install App Installer from the Microsoft Store.
     pause
     exit /b 1
 )
 
-REM Install any new dependencies
-npm install
+REM Check for Python
+where python >nul 2>nul
 if %errorlevel% neq 0 (
-    echo Failed to install dependencies. Please check your internet connection and try again.
-    pause
-    exit /b 1
+    echo Python not found. Installing Python...
+    winget install -e --id Python.Python.3.11
+    if !errorlevel! neq 0 (
+        echo Failed to install Python. Please install it manually from https://www.python.org/
+        pause
+        exit /b 1
+    )
+    echo Python installed successfully.
+    call refreshenv.cmd
+) else (
+    echo Python is already installed.
 )
 
-REM Start the bot
-node index.js
+REM Check for Node.js and npm
+where node >nul 2>nul
 if %errorlevel% neq 0 (
-    echo Failed to start the bot. Please check the error messages above.
-    pause
-    exit /b 1
+    echo Node.js not found. Installing Node.js...
+    winget install -e --id OpenJS.NodeJS
+    if !errorlevel! neq 0 (
+        echo Failed to install Node.js. Please install it manually from https://nodejs.org/
+        pause
+        exit /b 1
+    )
+    echo Node.js installed successfully.
+    call refreshenv.cmd
+) else (
+    echo Node.js is already installed.
 )
+
+REM Run the Python script
+echo Running the bot...
+python run_bot.py
 
 pause

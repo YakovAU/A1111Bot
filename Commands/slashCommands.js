@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require('@discordjs/builders');
 const { REST } = require('@discordjs/rest');
 const { Routes } = require('discord-api-types/v9');
 const config = require('../config');
-const { generateImage } = require('../imageGenerator');
+const { generateImage } = require('../bot/imageGenerator.js');
 
 const commands = [
     new SlashCommandBuilder()

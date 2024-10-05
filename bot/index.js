@@ -1,6 +1,6 @@
 const { Client, GatewayIntentBits, Partials } = require('discord.js');
-const config = require('./config');
-const { registerCommands } = require('./commands/slashCommands');
+const config = require('../config');
+const { registerCommands } = require('../commands/slashCommands');
 const { generateImage } = require('./imageGenerator');
 
 const client = new Client({
