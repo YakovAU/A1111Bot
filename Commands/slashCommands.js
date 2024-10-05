@@ -92,8 +92,25 @@ async function handleModelCommand(interaction) {
     await interaction.deferReply();
     try {
         const models = await getModels();
-        const modelList = models.map(model => `${model.title} (${model.model_name})`).join('\n');
-        await interaction.editReply(`Available models:\n${modelList}`);
+        const modelList = models.map(model => `${model.title} (${model.model_name})`);
+        
+        const chunks = ['Available models:'];
+        let currentChunk = chunks[0];
+        
+        for (const model of modelList) {
+            if (currentChunk.length + model.length + 1 > 1900) { // Leave some buffer
+                chunks.push(model);
+                currentChunk = model;
+            } else {
+                currentChunk += '\n' + model;
+                chunks[chunks.length - 1] = currentChunk;
+            }
+        }
+        
+        await interaction.editReply(chunks[0]);
+        for (let i = 1; i < chunks.length; i++) {
+            await interaction.followUp(chunks[i]);
+        }
     } catch (error) {
         console.error('Error fetching models:', error);
         await interaction.editReply('An error occurred while fetching the model list.');
