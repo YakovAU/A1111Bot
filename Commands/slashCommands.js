@@ -50,11 +50,24 @@ async function registerCommands() {
 async function handleImageCommand(interaction) {
     await interaction.deferReply();
     const prompt = interaction.options.getString('prompt');
-    const model = interaction.options.getString('model') || "juggernautXL_juggXIByRundiffusion.safetensors";
+    const modelOption = interaction.options.getString('model');
 
     try {
-        const message = await interaction.editReply('Generating image...');
-        const imageBuffer = await generateImage(prompt, model);
+        const models = await getModels();
+        let selectedModel;
+
+        if (modelOption) {
+            selectedModel = models.find(m => m.title.toLowerCase() === modelOption.toLowerCase());
+            if (!selectedModel) {
+                await interaction.editReply(`Model "${modelOption}" not found. Using default model.`);
+                selectedModel = models[0]; // Use the first model as default
+            }
+        } else {
+            selectedModel = models[0]; // Use the first model as default
+        }
+
+        const message = await interaction.editReply(`Generating image using model: ${selectedModel.title}...`);
+        const imageBuffer = await generateImage(prompt, selectedModel.title);
         
         // Update progress
         const intervalId = setInterval(async () => {
@@ -67,7 +80,7 @@ async function handleImageCommand(interaction) {
         }, 1000);
 
         const attachment = new AttachmentBuilder(imageBuffer, { name: 'generated_image.png' });
-        await interaction.editReply({ content: 'Here\'s your generated image:', files: [attachment] });
+        await interaction.editReply({ content: `Here's your generated image using model: ${selectedModel.title}`, files: [attachment] });
         clearInterval(intervalId);
     } catch (error) {
         console.error('Error generating image:', error);
