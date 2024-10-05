@@ -22,7 +22,7 @@ async function registerCommands() {
         console.log('Started refreshing application (/) commands.');
 
         await rest.put(
-            Routes.applicationGuildCommands(config.clientId, config.guildId),
+            Routes.applicationCommands(config.clientId),
             { body: commands },
         );
 
