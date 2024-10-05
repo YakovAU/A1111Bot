@@ -28,7 +28,14 @@ async function registerCommands() {
 
         console.log('Successfully reloaded application (/) commands.');
     } catch (error) {
-        console.error(error);
+        console.error('Error registering commands:', error);
+        if (error.code === 50001) {
+            console.error('Make sure the bot has the "applications.commands" scope approved in OAuth2.');
+        } else if (error.code === 50035) {
+            console.error('Invalid command data. Please check your command definitions.');
+        } else {
+            console.error('An unexpected error occurred. Please check your bot token and client ID.');
+        }
     }
 }
 
