@@ -1,7 +1,12 @@
 const axios = require('axios');
 const config = require('../config');
 
-async function generateImage(prompt) {
+async function getModels() {
+    const response = await axios.get(`${config.automatic1111Url}/sdapi/v1/sd-models`);
+    return response.data;
+}
+
+async function generateImage(prompt, model, progressCallback) {
     const payload = {
         prompt: prompt,
         negative_prompt: "deformed, unrealistic",
@@ -11,7 +16,7 @@ async function generateImage(prompt) {
         height: 1024,
         sampler_name: "DPM++ 2M SDE",
         override_settings: {
-            sd_model_checkpoint: "juggernautXL_juggXIByRundiffusion.safetensors"
+            sd_model_checkpoint: model
         },
         override_settings_restore_afterwards: true
     };
@@ -26,4 +31,9 @@ async function generateImage(prompt) {
     return Buffer.from(image, 'base64');
 }
 
-module.exports = { generateImage };
+async function getProgress() {
+    const response = await axios.get(`${config.automatic1111Url}/sdapi/v1/progress`);
+    return response.data;
+}
+
+module.exports = { generateImage, getModels, getProgress };

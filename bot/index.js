@@ -39,3 +39,27 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.login(config.token);
+const { Client, GatewayIntentBits } = require('discord.js');
+const { commands, registerCommands, handleImageCommand, handleModelCommand } = require('./Commands/slashCommands');
+const config = require('./config');
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+
+client.once('ready', () => {
+    console.log('Bot is ready!');
+    registerCommands();
+});
+
+client.on('interactionCreate', async interaction => {
+    if (!interaction.isCommand()) return;
+
+    const { commandName } = interaction;
+
+    if (commandName === 'image') {
+        await handleImageCommand(interaction);
+    } else if (commandName === 'model') {
+        await handleModelCommand(interaction);
+    }
+});
+
+client.login(config.token);
