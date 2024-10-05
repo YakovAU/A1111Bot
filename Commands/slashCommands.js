@@ -15,7 +15,7 @@ const commands = [
                 .setRequired(true))
         .addStringOption(option =>
             option.setName('model')
-                .setDescription('The model to use for generation')
+                .setDescription('The model to use for generation (leave empty for default)')
                 .setRequired(false)),
     new SlashCommandBuilder()
         .setName('model')
@@ -61,12 +61,15 @@ async function handleImageCommand(interaction) {
             if (!selectedModel) {
                 await interaction.editReply(`Model "${modelOption}" not found. Using default model.`);
                 selectedModel = models[0]; // Use the first model as default
+            } else {
+                await interaction.editReply(`Using selected model: ${selectedModel.title}`);
             }
         } else {
             selectedModel = models[0]; // Use the first model as default
+            await interaction.editReply(`Using default model: ${selectedModel.title}`);
         }
 
-        const message = await interaction.editReply(`Generating image using model: ${selectedModel.title}...`);
+        const message = await interaction.followUp(`Generating image...`);
         const imageBuffer = await generateImage(prompt, selectedModel.model_name);
         
         // Update progress
@@ -92,7 +95,7 @@ async function handleModelCommand(interaction) {
     await interaction.deferReply();
     try {
         const models = await getModels();
-        const modelList = models.map(model => `${model.title} (${model.model_name})`);
+        const modelList = models.map((model, index) => `${index + 1}. ${model.title} (${model.model_name})`);
         
         const chunks = ['Available models:'];
         let currentChunk = chunks[0];
@@ -106,6 +109,8 @@ async function handleModelCommand(interaction) {
                 chunks[chunks.length - 1] = currentChunk;
             }
         }
+        
+        chunks.push("\nTo use a specific model, add the model name or number to the /image command. For example: /image prompt:a beautiful landscape model:1");
         
         await interaction.editReply(chunks[0]);
         for (let i = 1; i < chunks.length; i++) {
