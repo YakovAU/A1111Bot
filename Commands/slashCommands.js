@@ -57,7 +57,7 @@ async function handleImageCommand(interaction) {
         let selectedModel;
 
         if (modelOption) {
-            selectedModel = models.find(m => m.title.toLowerCase() === modelOption.toLowerCase());
+            selectedModel = models.find(m => m.title.toLowerCase() === modelOption.toLowerCase() || m.model_name.toLowerCase() === modelOption.toLowerCase());
             if (!selectedModel) {
                 await interaction.editReply(`Model "${modelOption}" not found. Using default model.`);
                 selectedModel = models[0]; // Use the first model as default
@@ -67,7 +67,7 @@ async function handleImageCommand(interaction) {
         }
 
         const message = await interaction.editReply(`Generating image using model: ${selectedModel.title}...`);
-        const imageBuffer = await generateImage(prompt, selectedModel.title);
+        const imageBuffer = await generateImage(prompt, selectedModel.model_name);
         
         // Update progress
         const intervalId = setInterval(async () => {
@@ -92,7 +92,7 @@ async function handleModelCommand(interaction) {
     await interaction.deferReply();
     try {
         const models = await getModels();
-        const modelList = models.map(model => model.title).join('\n');
+        const modelList = models.map(model => `${model.title} (${model.model_name})`).join('\n');
         await interaction.editReply(`Available models:\n${modelList}`);
     } catch (error) {
         console.error('Error fetching models:', error);

@@ -2,11 +2,23 @@ const axios = require('axios');
 const config = require('../config');
 
 async function getModels() {
-    const response = await axios.get(`${config.automatic1111Url}/sdapi/v1/sd-models`);
-    return response.data;
+    try {
+        const response = await axios.get(`${config.automatic1111Url}/sdapi/v1/sd-models`);
+        return response.data.map(model => ({
+            title: model.title,
+            model_name: model.model_name,
+            hash: model.hash,
+            sha256: model.sha256,
+            filename: model.filename,
+            config: model.config
+        }));
+    } catch (error) {
+        console.error('Error fetching models:', error);
+        throw error;
+    }
 }
 
-async function generateImage(prompt, model, progressCallback) {
+async function generateImage(prompt, model) {
     const payload = {
         prompt: prompt,
         negative_prompt: "deformed, unrealistic",
@@ -21,19 +33,29 @@ async function generateImage(prompt, model, progressCallback) {
         override_settings_restore_afterwards: true
     };
 
-    const response = await axios.post(`${config.automatic1111Url}/sdapi/v1/txt2img`, payload);
+    try {
+        const response = await axios.post(`${config.automatic1111Url}/sdapi/v1/txt2img`, payload);
 
-    if (!response.data || !response.data.images || response.data.images.length === 0) {
-        throw new Error('No images were generated.');
+        if (!response.data || !response.data.images || response.data.images.length === 0) {
+            throw new Error('No images were generated.');
+        }
+
+        const image = response.data.images[0];
+        return Buffer.from(image, 'base64');
+    } catch (error) {
+        console.error('Error generating image:', error);
+        throw error;
     }
-
-    const image = response.data.images[0];
-    return Buffer.from(image, 'base64');
 }
 
 async function getProgress() {
-    const response = await axios.get(`${config.automatic1111Url}/sdapi/v1/progress`);
-    return response.data;
+    try {
+        const response = await axios.get(`${config.automatic1111Url}/sdapi/v1/progress`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching progress:', error);
+        throw error;
+    }
 }
 
 module.exports = { generateImage, getModels, getProgress };
