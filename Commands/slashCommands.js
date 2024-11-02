@@ -4,6 +4,7 @@ const { Routes } = require('discord-api-types/v9');
 const { AttachmentBuilder } = require('discord.js');
 const config = require('../config');
 const { generateImage, getModels, getProgress } = require('../bot/imageGenerator.js');
+const { containsRestrictedContent } = require('../bot/contentFilter');
 
 const commands = [
     new SlashCommandBuilder()
@@ -51,6 +52,12 @@ async function handleImageCommand(interaction) {
     await interaction.deferReply();
     const prompt = interaction.options.getString('prompt');
     const modelOption = interaction.options.getString('model');
+
+    // Check for restricted content
+    if (containsRestrictedContent(prompt)) {
+        await interaction.editReply('Sorry, your prompt contains restricted content. Please modify your request.');
+        return;
+    }
 
     try {
         const models = await getModels();
