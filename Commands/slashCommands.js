@@ -87,22 +87,30 @@ async function handleImageCommand(interaction) {
             await interaction.editReply(`Using default model: ${selectedModel.title}`);
         }
 
-        const message = await interaction.followUp(`Generating image...`);
-        const imageBuffer = await generateImage(prompt, selectedModel.model_name);
+        const progressMessage = await interaction.followUp(`Starting image generation...`);
         
-        // Update progress
-        const intervalId = setInterval(async () => {
+        const updateProgress = async () => {
             const progress = await getProgress();
-            if (progress.progress < 1) {
-                await message.edit(`Generating image... ${Math.round(progress.progress * 100)}% complete`);
-            } else {
-                clearInterval(intervalId);
+            const percent = Math.round(progress.progress * 100);
+            let statusText = `Generating image... ${percent}%\n`;
+            
+            if (progress.textinfo) {
+                statusText += `Status: ${progress.textinfo}\n`;
             }
-        }, 1000);
+            if (progress.eta_relative) {
+                statusText += `ETA: ${Math.round(progress.eta_relative)} seconds`;
+            }
+            
+            return progressMessage.edit(statusText);
+        };
+
+        const intervalId = setInterval(updateProgress, 1000);
+        const imageBuffer = await generateImage(prompt, selectedModel.model_name);
+        clearInterval(intervalId);
 
         const attachment = new AttachmentBuilder(imageBuffer, { name: 'generated_image.png' });
         await interaction.editReply({ content: `Here's your generated image using model: ${selectedModel.title}`, files: [attachment] });
-        clearInterval(intervalId);
+        await progressMessage.delete().catch(console.error);
     } catch (error) {
         console.error('Error generating image:', error);
         await interaction.editReply('An error occurred while generating the image.');
