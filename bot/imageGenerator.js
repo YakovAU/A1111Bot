@@ -18,7 +18,10 @@ async function getModels() {
     }
 }
 
-async function generateImage(prompt, model) {
+async function generateImage(prompt, model, retryCount = 0) {
+    const MAX_RETRIES = 3;
+    const RETRY_DELAY = 2000; // 2 seconds
+
     const payload = {
         prompt: prompt,
         negative_prompt: "deformed, unrealistic",
@@ -34,6 +37,11 @@ async function generateImage(prompt, model) {
     };
 
     try {
+        // Try to reload model first
+        await axios.post(`${config.automatic1111Url}/sdapi/v1/reload-checkpoint`, {
+            model_name: model
+        }).catch(err => console.warn('Model reload attempt failed:', err.message));
+
         const response = await axios.post(`${config.automatic1111Url}/sdapi/v1/txt2img`, payload);
 
         if (!response.data || !response.data.images || response.data.images.length === 0) {
@@ -44,6 +52,18 @@ async function generateImage(prompt, model) {
         return Buffer.from(image, 'base64');
     } catch (error) {
         console.error('Error generating image:', error);
+        
+        // Check if error is related to SafetensorError or model loading
+        if ((error.response?.data?.error === 'SafetensorError' || 
+             error.message.includes('SafetensorError') ||
+             error.message.includes('MetadataIncompleteBuffer')) && 
+            retryCount < MAX_RETRIES) {
+            
+            console.log(`Retrying image generation (attempt ${retryCount + 1}/${MAX_RETRIES})...`);
+            await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+            return generateImage(prompt, model, retryCount + 1);
+        }
+
         throw error;
     }
 }
