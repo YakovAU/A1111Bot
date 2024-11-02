@@ -1,8 +1,10 @@
-const restrictedWords = ['child', 'kid', 'children'];
+const baseRestrictedWords = ['child', 'kid', 'children'];
+const adultWords = ['nude', 'naked', 'porn'];
 
 function containsRestrictedContent(prompt) {
     const normalizedPrompt = prompt.toLowerCase();
-    return restrictedWords.some(word => normalizedPrompt.includes(word));
+    return baseRestrictedWords.some(word => normalizedPrompt.includes(word)) &&
+        adultWords.some(word => normalizedPrompt.includes(word));
 }
 
 module.exports = { containsRestrictedContent };
