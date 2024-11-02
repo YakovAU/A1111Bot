@@ -16,7 +16,7 @@ const commands = [
                 .setRequired(true))
         .addStringOption(option =>
             option.setName('model')
-                .setDescription('The model to use for generation (leave empty for default)')
+                .setDescription('Model name or number from /model list (leave empty for default)')
                 .setRequired(false)),
     new SlashCommandBuilder()
         .setName('model')
@@ -64,12 +64,23 @@ async function handleImageCommand(interaction) {
         let selectedModel;
 
         if (modelOption) {
-            selectedModel = models.find(m => m.title.toLowerCase() === modelOption.toLowerCase() || m.model_name.toLowerCase() === modelOption.toLowerCase());
-            if (!selectedModel) {
-                await interaction.editReply(`Model "${modelOption}" not found. Using default model.`);
-                selectedModel = models[0]; // Use the first model as default
+            // Try to parse as a number first
+            const modelNumber = parseInt(modelOption);
+            if (!isNaN(modelNumber) && modelNumber > 0 && modelNumber <= models.length) {
+                selectedModel = models[modelNumber - 1];
+                await interaction.editReply(`Using model #${modelNumber}: ${selectedModel.title}`);
             } else {
-                await interaction.editReply(`Using selected model: ${selectedModel.title}`);
+                // Try to match by name
+                selectedModel = models.find(m => 
+                    m.title.toLowerCase() === modelOption.toLowerCase() || 
+                    m.model_name.toLowerCase() === modelOption.toLowerCase()
+                );
+                if (!selectedModel) {
+                    await interaction.editReply(`Model "${modelOption}" not found. Using default model.`);
+                    selectedModel = models[0];
+                } else {
+                    await interaction.editReply(`Using selected model: ${selectedModel.title}`);
+                }
             }
         } else {
             selectedModel = models[0]; // Use the first model as default
@@ -117,7 +128,10 @@ async function handleModelCommand(interaction) {
             }
         }
         
-        chunks.push("\nTo use a specific model, add the model name or number to the /image command. For example: /image prompt:a beautiful landscape model:1");
+        chunks.push("\nTo use a specific model, use either the number or name with the /image command."
+            + "\nExamples:"
+            + "\n• /image prompt:a beautiful landscape model:1"
+            + "\n• /image prompt:a beautiful landscape model:v1-5-pruned-emaonly");
         
         await interaction.editReply(chunks[0]);
         for (let i = 1; i < chunks.length; i++) {
